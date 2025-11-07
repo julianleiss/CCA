@@ -1,3 +1,57 @@
+# Visualización de Red de Actores - Adicción Tecnológica
+
+Visualización interactiva basada en D3.js que modela las relaciones complejas entre plataformas digitales, constructos psicológicos, efectos en la salud, y sistemas de intervención en el contexto de la adicción tecnológica.
+
+## Dataset: 51 Nodos, 67 Relaciones
+
+### Categorías de Actores
+
+**Plataformas Digitales** (11 nodos - artefacto):
+- Instagram, TikTok, YouTube, Snapchat, Netflix, Amazon Prime, HBO Max, Disney Plus, BeReal, WhatsApp, Bet365
+
+**Juegos** (3 nodos - artefacto):
+- Supercell Games, PlayStation, Apps de Ajedrez
+
+**Constructos Psicológicos** (6 nodos - no_humano):
+- Dopamina, FOMO, Vanidad, Disociación, Baja autoestima, Placer
+
+**Efectos Negativos** (5 nodos - no_humano):
+- Burnout, Depresión, Insomnio, Dolor ocular, Desconexión del mundo análogo
+
+**Motivadores** (6 nodos - humano):
+- Entretenimiento, Comunicación, Información, Novedad, Contacto social, Sociabilidad
+
+**Actores Humanos** (4 nodos - humano):
+- Adolescentes, Adultos jóvenes, Creadores de contenido, Usuarios digitales
+
+**Instituciones** (4 nodos - institucion):
+- Industria tecnológica, Sistema educativo, Sistema de salud, Reguladores
+
+**Intervenciones** (5 nodos - intervencion):
+- Terapia digital, Educación mediática, Límites de tiempo, Mindfulness digital, Regulación de plataformas
+
+### Modelo Causa-Efecto
+
+El grafo modela ciclos de refuerzo y cascadas causales:
+
+1. **Motivadores → Plataformas**: Necesidades humanas impulsan el uso
+2. **Plataformas → Constructos**: Diseños adictivos activan mecanismos psicológicos
+3. **Constructos → Efectos**: Consecuencias negativas en salud mental y física
+4. **Constructos → Plataformas**: Ciclos de refuerzo que perpetúan el uso
+5. **Industria → Plataformas**: Diseño intencional para maximizar engagement
+6. **Efectos → Salud/Educación**: Impacto en sistemas sociales
+7. **Intervenciones → Efectos/Constructos**: Estrategias de mitigación
+
+### Interfaz en Español
+
+Toda la UI está en español:
+- Controles: "Mostrar solo intervenciones", "Buscar nodos por nombre"
+- Botones de exportación y zoom en español
+- Tabla resumen: "Top 10 Nodos por Influencia"
+- Tooltips: "Grupo", "Influencia", "Nivel", "Confianza"
+
+---
+
 # Actor-Network Graph Visualization
 
 A D3.js-based interactive visualization for rendering actor-network graphs with force-directed layout.
