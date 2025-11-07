@@ -50,6 +50,37 @@ Toda la UI está en español:
 - Tabla resumen: "Top 10 Nodos por Influencia"
 - Tooltips: "Grupo", "Influencia", "Nivel", "Confianza"
 
+### Códigos Visuales Semánticos
+
+La visualización utiliza iconografía y estilos de borde para comunicar roles y causalidad **sin necesidad de hover**:
+
+**Iconos en Nodos:**
+- ⚠️ Efectos negativos (depresión, burnout, insomnio, dolor ocular, desconexión)
+- 🛠️ Intervenciones (terapia, educación mediática, límites de tiempo, mindfulness, regulación)
+- 📱 Plataformas digitales (Instagram, TikTok, YouTube, Netflix, WhatsApp, juegos, etc.)
+
+**Bordes Semánticos:**
+- **Borde grueso (4px)**: Mediadores - Constructos psicológicos que conectan causas con efectos (Dopamina, FOMO, Vanidad, etc.)
+- **Borde discontinuo**: Influenciadores indirectos - Motivadores que impulsan el uso (Entretenimiento, Comunicación, Novedad, etc.)
+- **Halo/Resplandor**: Nodos de alto impacto con influencia ≥ 90 (TikTok, Industria Tecnológica, Depresión, etc.)
+- **Borde rojo**: Efectos negativos
+- **Borde verde**: Intervenciones
+
+**Etiquetas Causales en Enlaces:**
+- **↑ uso**: Motiva o incrementa el uso
+- **↑ efecto**: Induce o genera efectos
+- **↓ salud**: Agota o reduce la salud
+- **↓ bienestar**: Causa ansiedad, depresión u otros efectos negativos
+- **⟲ ciclo**: Compulsiones y ciclos de refuerzo
+- **↓ impacto**: Tratamientos o límites que reducen impacto negativo
+- **⚙️ diseño**: Diseño intencional para engagement
+
+**Legibilidad:**
+- Todos los códigos visuales son visibles en exportaciones SVG/PNG estáticas
+- Sombras de texto blancas garantizan legibilidad sobre cualquier fondo
+- Diseño optimizado para impresión en blanco y negro
+- Tooltips interactivos como respaldo informativo
+
 ---
 
 # Actor-Network Graph Visualization
