@@ -428,30 +428,30 @@
     </style>
 </head>
 <body>
-    <div id="controls-panel" role="toolbar" aria-label="Graph controls">
-        <div class="control-group" role="group" aria-label="Group filters">
+    <div id="controls-panel" role="toolbar" aria-label="Controles del grafo">
+        <div class="control-group" role="group" aria-label="Filtros por grupo">
             <label>
-                <input type="checkbox" id="filter-humano" value="humano" checked aria-label="Show humano nodes">
+                <input type="checkbox" id="filter-humano" value="humano" checked aria-label="Mostrar nodos humano">
                 <span class="color-indicator" style="background-color: #2E7D32;"></span>
                 Humano
             </label>
             <label>
-                <input type="checkbox" id="filter-artefacto" value="artefacto" checked aria-label="Show artefacto nodes">
+                <input type="checkbox" id="filter-artefacto" value="artefacto" checked aria-label="Mostrar nodos artefacto">
                 <span class="color-indicator" style="background-color: #1565C0;"></span>
                 Artefacto
             </label>
             <label>
-                <input type="checkbox" id="filter-no_humano" value="no_humano" checked aria-label="Show no_humano nodes">
+                <input type="checkbox" id="filter-no_humano" value="no_humano" checked aria-label="Mostrar nodos no humano">
                 <span class="color-indicator" style="background-color: #EF6C00;"></span>
                 No Humano
             </label>
             <label>
-                <input type="checkbox" id="filter-institucion" value="institucion" checked aria-label="Show institucion nodes">
+                <input type="checkbox" id="filter-institucion" value="institucion" checked aria-label="Mostrar nodos institución">
                 <span class="color-indicator" style="background-color: #6A1B9A;"></span>
                 Institución
             </label>
             <label>
-                <input type="checkbox" id="filter-intervencion" value="intervencion" checked aria-label="Show intervencion nodes">
+                <input type="checkbox" id="filter-intervencion" value="intervencion" checked aria-label="Mostrar nodos intervención">
                 <span class="color-indicator" style="background-color: #00796B;"></span>
                 Intervención
             </label>
@@ -459,7 +459,7 @@
 
         <div class="control-group">
             <button id="btn-intervencion-only" class="btn btn-secondary" aria-pressed="false">
-                Show Interventions Only
+                Mostrar solo intervenciones
             </button>
         </div>
 
@@ -467,27 +467,27 @@
             <input
                 type="text"
                 id="search-box"
-                placeholder="Search nodes by label..."
-                aria-label="Search nodes by label"
+                placeholder="Buscar nodos por nombre..."
+                aria-label="Buscar nodos por nombre"
                 autocomplete="off"
             >
         </div>
 
         <div class="control-group">
-            <button id="btn-export-svg" class="btn" aria-label="Export graph as SVG">
-                Export SVG
+            <button id="btn-export-svg" class="btn" aria-label="Exportar grafo como SVG">
+                Exportar SVG
             </button>
-            <button id="btn-export-png" class="btn" aria-label="Export graph as PNG">
-                Export PNG
+            <button id="btn-export-png" class="btn" aria-label="Exportar grafo como PNG">
+                Exportar PNG
             </button>
         </div>
     </div>
 
-    <div id="graph-container" role="img" aria-label="Interactive actor-network graph"></div>
+    <div id="graph-container" role="img" aria-label="Grafo interactivo de red de actores"></div>
     <div class="tooltip" role="tooltip"></div>
 
-    <div class="legend" aria-label="Legend">
-        <div class="legend-title">Node Groups</div>
+    <div class="legend" aria-label="Leyenda">
+        <div class="legend-title">Grupos de Nodos</div>
         <div class="legend-item">
             <div class="legend-color" style="background-color: #2E7D32;"></div>
             <span>Humano</span>
@@ -511,62 +511,169 @@
     </div>
 
     <div id="zoom-controls">
-        <button class="zoom-btn" id="zoom-in" aria-label="Zoom in">+</button>
-        <button class="zoom-btn" id="zoom-out" aria-label="Zoom out">−</button>
-        <button class="zoom-btn" id="zoom-reset" aria-label="Reset zoom">⟲</button>
+        <button class="zoom-btn" id="zoom-in" aria-label="Acercar">+</button>
+        <button class="zoom-btn" id="zoom-out" aria-label="Alejar">−</button>
+        <button class="zoom-btn" id="zoom-reset" aria-label="Restablecer zoom">⟲</button>
     </div>
 
     <section id="summary-section">
         <div id="summary-table-container">
-            <h2>Top 10 Nodes by Influence</h2>
-            <table id="influence-table" role="table" aria-label="Top 10 most influential nodes">
+            <h2>Top 10 Nodos por Influencia</h2>
+            <table id="influence-table" role="table" aria-label="Top 10 nodos más influyentes">
                 <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col">Label</th>
-                        <th scope="col">Group</th>
-                        <th scope="col">Influence</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Grupo</th>
+                        <th scope="col">Influencia</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <!-- Populated by JavaScript -->
+                    <!-- Poblado por JavaScript -->
                 </tbody>
             </table>
         </div>
     </section>
 
     <script>
-        // Sample dataset structure - replace with actual data
+        // Dataset basado en adicción tecnológica y ciencia conductual
         const data = {
             nodes: [
-                { id: "n1", label: "Community Leaders", short_label: "Leaders", influence: 85, group: "humano", level: "meso" },
-                { id: "n2", label: "Water Infrastructure", short_label: "Water", influence: 75, group: "artefacto", level: "macro" },
-                { id: "n3", label: "Local Wildlife", short_label: "Wildlife", influence: 60, group: "no_humano", level: "micro" },
-                { id: "n4", label: "Government Agency", short_label: "Gov", influence: 90, group: "institucion", level: "macro" },
-                { id: "n5", label: "Conservation Program", short_label: "Program", influence: 70, group: "intervencion", level: "meso" },
-                { id: "n6", label: "Farmers", short_label: "Farmers", influence: 65, group: "humano", level: "micro" },
-                { id: "n7", label: "Research Equipment", short_label: "Equipment", influence: 55, group: "artefacto", level: "micro" },
-                { id: "n8", label: "Native Plants", short_label: "Plants", influence: 50, group: "no_humano", level: "micro" },
-                { id: "n9", label: "Educational Institution", short_label: "Education", influence: 80, group: "institucion", level: "meso" },
-                { id: "n10", label: "Training Workshop", short_label: "Workshop", influence: 45, group: "intervencion", level: "micro" },
-                { id: "n11", label: "Scientists", short_label: "Scientists", influence: 72, group: "humano", level: "meso" },
-                { id: "n12", label: "Monitoring System", short_label: "Monitor", influence: 58, group: "artefacto", level: "meso" }
+                // PLATAFORMAS (artefacto)
+                { id: "p1", label: "Instagram", short_label: "Instagram", influence: 95, group: "artefacto", level: "macro" },
+                { id: "p2", label: "TikTok", short_label: "TikTok", influence: 98, group: "artefacto", level: "macro" },
+                { id: "p3", label: "YouTube", short_label: "YouTube", influence: 92, group: "artefacto", level: "macro" },
+                { id: "p4", label: "Snapchat", short_label: "Snapchat", influence: 75, group: "artefacto", level: "meso" },
+                { id: "p5", label: "Netflix", short_label: "Netflix", influence: 88, group: "artefacto", level: "macro" },
+                { id: "p6", label: "Amazon Prime", short_label: "Prime", influence: 70, group: "artefacto", level: "meso" },
+                { id: "p7", label: "HBO Max", short_label: "HBO", influence: 65, group: "artefacto", level: "meso" },
+                { id: "p8", label: "Disney Plus", short_label: "Disney+", influence: 72, group: "artefacto", level: "meso" },
+                { id: "p9", label: "BeReal", short_label: "BeReal", influence: 55, group: "artefacto", level: "micro" },
+                { id: "p10", label: "WhatsApp", short_label: "WhatsApp", influence: 90, group: "artefacto", level: "macro" },
+                { id: "p11", label: "Bet365", short_label: "Bet365", influence: 68, group: "artefacto", level: "meso" },
+
+                // JUEGOS (artefacto)
+                { id: "g1", label: "Supercell Games", short_label: "Supercell", influence: 78, group: "artefacto", level: "meso" },
+                { id: "g2", label: "PlayStation", short_label: "PS", influence: 82, group: "artefacto", level: "macro" },
+                { id: "g3", label: "Apps de Ajedrez", short_label: "Chess", influence: 58, group: "artefacto", level: "micro" },
+
+                // CONSTRUCTOS PSICOLÓGICOS (no_humano)
+                { id: "c1", label: "Dopamina", short_label: "Dopamina", influence: 94, group: "no_humano", level: "micro" },
+                { id: "c2", label: "FOMO", short_label: "FOMO", influence: 88, group: "no_humano", level: "meso" },
+                { id: "c3", label: "Vanidad", short_label: "Vanidad", influence: 76, group: "no_humano", level: "micro" },
+                { id: "c4", label: "Disociación", short_label: "Disociación", influence: 70, group: "no_humano", level: "micro" },
+                { id: "c5", label: "Baja autoestima", short_label: "Autoestima", influence: 82, group: "no_humano", level: "micro" },
+                { id: "c6", label: "Placer", short_label: "Placer", influence: 85, group: "no_humano", level: "micro" },
+
+                // EFECTOS NEGATIVOS (no_humano)
+                { id: "e1", label: "Burnout", short_label: "Burnout", influence: 78, group: "no_humano", level: "meso" },
+                { id: "e2", label: "Depresión", short_label: "Depresión", influence: 90, group: "no_humano", level: "meso" },
+                { id: "e3", label: "Insomnio", short_label: "Insomnio", influence: 72, group: "no_humano", level: "micro" },
+                { id: "e4", label: "Dolor ocular", short_label: "Dolor ocular", influence: 58, group: "no_humano", level: "micro" },
+                { id: "e5", label: "Desconexión mundo análogo", short_label: "Desconexión", influence: 84, group: "no_humano", level: "meso" },
+
+                // MOTIVADORES (humano)
+                { id: "m1", label: "Entretenimiento", short_label: "Entret.", influence: 86, group: "humano", level: "macro" },
+                { id: "m2", label: "Comunicación", short_label: "Comunic.", influence: 88, group: "humano", level: "macro" },
+                { id: "m3", label: "Información", short_label: "Info", influence: 80, group: "humano", level: "meso" },
+                { id: "m4", label: "Novedad", short_label: "Novedad", influence: 75, group: "humano", level: "meso" },
+                { id: "m5", label: "Contacto social", short_label: "Contacto", influence: 82, group: "humano", level: "meso" },
+                { id: "m6", label: "Sociabilidad", short_label: "Social", influence: 79, group: "humano", level: "meso" },
+
+                // ACTORES HUMANOS (humano)
+                { id: "h1", label: "Adolescentes", short_label: "Adolesc.", influence: 85, group: "humano", level: "micro" },
+                { id: "h2", label: "Adultos jóvenes", short_label: "Jóvenes", influence: 82, group: "humano", level: "micro" },
+                { id: "h3", label: "Creadores de contenido", short_label: "Creators", influence: 78, group: "humano", level: "meso" },
+                { id: "h4", label: "Usuarios digitales", short_label: "Usuarios", influence: 88, group: "humano", level: "macro" },
+
+                // INSTITUCIONES (institucion)
+                { id: "i1", label: "Industria tecnológica", short_label: "BigTech", influence: 96, group: "institucion", level: "macro" },
+                { id: "i2", label: "Sistema educativo", short_label: "Educación", influence: 74, group: "institucion", level: "macro" },
+                { id: "i3", label: "Sistema de salud", short_label: "Salud", influence: 70, group: "institucion", level: "macro" },
+                { id: "i4", label: "Reguladores", short_label: "Reguladores", influence: 65, group: "institucion", level: "meso" },
+
+                // INTERVENCIONES (intervencion)
+                { id: "int1", label: "Terapia digital", short_label: "Terapia", influence: 68, group: "intervencion", level: "meso" },
+                { id: "int2", label: "Educación mediática", short_label: "Educ.Media", influence: 72, group: "intervencion", level: "meso" },
+                { id: "int3", label: "Límites de tiempo", short_label: "Límites", influence: 58, group: "intervencion", level: "micro" },
+                { id: "int4", label: "Mindfulness digital", short_label: "Mindful", influence: 62, group: "intervencion", level: "micro" },
+                { id: "int5", label: "Regulación plataformas", short_label: "Regulación", influence: 75, group: "intervencion", level: "macro" }
             ],
             links: [
-                { source: "n1", target: "n4", rel: "collaborates with", w: 4, pol: "+", conf: 0.9 },
-                { source: "n4", target: "n2", rel: "manages", w: 5, pol: "+", conf: 0.95 },
-                { source: "n5", target: "n3", rel: "protects", w: 3, pol: "+", conf: 0.85 },
-                { source: "n1", target: "n6", rel: "organizes", w: 3, pol: "+", conf: 0.8 },
-                { source: "n6", target: "n3", rel: "affects", w: 2, pol: "-", conf: 0.7 },
-                { source: "n9", target: "n11", rel: "employs", w: 4, pol: "+", conf: 0.9 },
-                { source: "n11", target: "n7", rel: "uses", w: 3, pol: "+", conf: 0.85 },
-                { source: "n7", target: "n12", rel: "connects to", w: 2, pol: "+", conf: 0.75 },
-                { source: "n5", target: "n10", rel: "implements", w: 4, pol: "+", conf: 0.88 },
-                { source: "n10", target: "n6", rel: "trains", w: 3, pol: "+", conf: 0.82 },
-                { source: "n2", target: "n8", rel: "irrigates", w: 2, pol: "+", conf: 0.65 },
-                { source: "n11", target: "n3", rel: "studies", w: 2, pol: "+", conf: 0.78 },
-                { source: "n12", target: "n8", rel: "monitors", w: 2, pol: "+", conf: 0.72 },
-                { source: "n4", target: "n5", rel: "funds", w: 5, pol: "+", conf: 0.92 }
+                // MOTIVADORES → PLATAFORMAS
+                { source: "m1", target: "p5", rel: "motiva uso", w: 5, pol: "+", conf: 0.95 },
+                { source: "m1", target: "p3", rel: "motiva uso", w: 5, pol: "+", conf: 0.92 },
+                { source: "m1", target: "p2", rel: "motiva uso", w: 5, pol: "+", conf: 0.94 },
+                { source: "m2", target: "p10", rel: "motiva uso", w: 5, pol: "+", conf: 0.98 },
+                { source: "m3", target: "p3", rel: "motiva uso", w: 4, pol: "+", conf: 0.88 },
+                { source: "m4", target: "p2", rel: "motiva uso", w: 5, pol: "+", conf: 0.93 },
+                { source: "m5", target: "p1", rel: "motiva uso", w: 4, pol: "+", conf: 0.90 },
+                { source: "m6", target: "p9", rel: "motiva uso", w: 3, pol: "+", conf: 0.82 },
+
+                // PLATAFORMAS → CONSTRUCTOS
+                { source: "p2", target: "c1", rel: "induce scroll infinito", w: 5, pol: "+", conf: 0.95 },
+                { source: "p1", target: "c1", rel: "genera likes", w: 5, pol: "+", conf: 0.93 },
+                { source: "p1", target: "c3", rel: "estimula comparación", w: 4, pol: "+", conf: 0.88 },
+                { source: "p2", target: "c2", rel: "alimenta miedo a perderse", w: 5, pol: "+", conf: 0.92 },
+                { source: "p1", target: "c2", rel: "alimenta miedo a perderse", w: 4, pol: "+", conf: 0.89 },
+                { source: "p5", target: "c6", rel: "recompensa inmediata", w: 4, pol: "+", conf: 0.87 },
+                { source: "p3", target: "c6", rel: "recompensa inmediata", w: 4, pol: "+", conf: 0.86 },
+                { source: "g2", target: "c6", rel: "recompensa inmediata", w: 4, pol: "+", conf: 0.85 },
+                { source: "p11", target: "c4", rel: "induce disociación", w: 4, pol: "-", conf: 0.84 },
+
+                // CONSTRUCTOS → EFECTOS
+                { source: "c1", target: "e1", rel: "agotamiento dopaminérgico", w: 4, pol: "-", conf: 0.88 },
+                { source: "c2", target: "e2", rel: "ansiedad crónica", w: 5, pol: "-", conf: 0.90 },
+                { source: "c3", target: "e2", rel: "insatisfacción constante", w: 4, pol: "-", conf: 0.85 },
+                { source: "c5", target: "e2", rel: "refuerza negatividad", w: 5, pol: "-", conf: 0.92 },
+                { source: "p2", target: "e3", rel: "uso nocturno", w: 4, pol: "-", conf: 0.86 },
+                { source: "p1", target: "e3", rel: "uso nocturno", w: 3, pol: "-", conf: 0.82 },
+                { source: "p3", target: "e4", rel: "pantalla prolongada", w: 3, pol: "-", conf: 0.78 },
+                { source: "g2", target: "e4", rel: "pantalla prolongada", w: 3, pol: "-", conf: 0.80 },
+                { source: "c4", target: "e5", rel: "reduce contacto real", w: 5, pol: "-", conf: 0.91 },
+                { source: "e3", target: "e5", rel: "fatiga presencial", w: 3, pol: "-", conf: 0.75 },
+
+                // CONSTRUCTOS → PLATAFORMAS (ciclo refuerzo)
+                { source: "c2", target: "p1", rel: "compulsión a revisar", w: 5, pol: "+", conf: 0.93 },
+                { source: "c2", target: "p2", rel: "compulsión a revisar", w: 5, pol: "+", conf: 0.94 },
+                { source: "c3", target: "p1", rel: "búsqueda validación", w: 4, pol: "+", conf: 0.87 },
+                { source: "c5", target: "p1", rel: "búsqueda validación", w: 4, pol: "+", conf: 0.88 },
+
+                // ACTORES HUMANOS → PLATAFORMAS
+                { source: "h1", target: "p2", rel: "uso intensivo", w: 5, pol: "+", conf: 0.95 },
+                { source: "h1", target: "p1", rel: "uso intensivo", w: 5, pol: "+", conf: 0.93 },
+                { source: "h2", target: "p3", rel: "uso frecuente", w: 4, pol: "+", conf: 0.88 },
+                { source: "h3", target: "p1", rel: "dependencia económica", w: 5, pol: "+", conf: 0.92 },
+                { source: "h4", target: "p10", rel: "uso diario", w: 5, pol: "+", conf: 0.98 },
+
+                // INDUSTRIA → PLATAFORMAS
+                { source: "i1", target: "p1", rel: "diseña engagement", w: 5, pol: "+", conf: 0.97 },
+                { source: "i1", target: "p2", rel: "diseña engagement", w: 5, pol: "+", conf: 0.98 },
+                { source: "i1", target: "p3", rel: "diseña engagement", w: 5, pol: "+", conf: 0.96 },
+                { source: "i1", target: "c1", rel: "explota mecanismos", w: 5, pol: "-", conf: 0.94 },
+
+                // EFECTOS → SALUD/EDUCACIÓN
+                { source: "e2", target: "i3", rel: "demanda atención", w: 4, pol: "+", conf: 0.86 },
+                { source: "e1", target: "i3", rel: "demanda atención", w: 3, pol: "+", conf: 0.80 },
+                { source: "e5", target: "i2", rel: "afecta rendimiento", w: 4, pol: "-", conf: 0.84 },
+                { source: "e3", target: "i2", rel: "afecta rendimiento", w: 3, pol: "-", conf: 0.82 },
+
+                // INTERVENCIONES → EFECTOS/CONSTRUCTOS
+                { source: "int1", target: "e2", rel: "trata síntomas", w: 4, pol: "+", conf: 0.78 },
+                { source: "int2", target: "c2", rel: "reduce susceptibilidad", w: 3, pol: "+", conf: 0.75 },
+                { source: "int3", target: "p2", rel: "limita exposición", w: 3, pol: "+", conf: 0.72 },
+                { source: "int4", target: "c1", rel: "regula respuesta", w: 3, pol: "+", conf: 0.70 },
+                { source: "int5", target: "i1", rel: "controla prácticas", w: 4, pol: "+", conf: 0.80 },
+                { source: "i4", target: "int5", rel: "implementa", w: 4, pol: "+", conf: 0.85 },
+
+                // SISTEMA EDUCATIVO → INTERVENCIONES
+                { source: "i2", target: "int2", rel: "implementa programas", w: 4, pol: "+", conf: 0.83 },
+                { source: "i3", target: "int1", rel: "ofrece tratamiento", w: 4, pol: "+", conf: 0.88 },
+
+                // JUEGOS → EFECTOS
+                { source: "g1", target: "c1", rel: "recompensas variables", w: 4, pol: "+", conf: 0.87 },
+                { source: "g2", target: "e5", rel: "aislamiento", w: 4, pol: "-", conf: 0.83 },
+                { source: "p11", target: "e2", rel: "ludopatía digital", w: 5, pol: "-", conf: 0.91 }
             ]
         };
 
@@ -694,13 +801,13 @@
             .each(function(d) {
                 // Add title for accessibility
                 d3.select(this).append("title")
-                    .text(`${d.rel} (confidence: ${d.conf})`);
+                    .text(`${d.rel} (confianza: ${d.conf})`);
             });
 
         // Throttled tooltip handler
         const showLinkTooltip = throttle(function(event, d) {
             tooltip
-                .html(`<strong>${d.rel}</strong><br/>Confidence: ${d.conf}`)
+                .html(`<strong>${d.rel}</strong><br/>Confianza: ${d.conf}`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 10) + "px")
                 .classed("visible", true);
@@ -722,7 +829,7 @@
             .attr("class", "node")
             .attr("tabindex", 0)
             .attr("role", "button")
-            .attr("aria-label", d => `${d.label}, ${d.group} group, influence ${d.influence}`)
+            .attr("aria-label", d => `${d.label}, grupo ${d.group}, influencia ${d.influence}`)
             .call(d3.drag()
                 .on("start", dragstarted)
                 .on("drag", dragged)
@@ -735,13 +842,13 @@
             .each(function(d) {
                 // Add title for tooltip
                 d3.select(this.parentNode).append("title")
-                    .text(`${d.label}\nGroup: ${d.group}\nInfluence: ${d.influence}\nLevel: ${d.level}`);
+                    .text(`${d.label}\nGrupo: ${d.group}\nInfluencia: ${d.influence}\nNivel: ${d.level}`);
             });
 
         // Throttled node tooltip handler
         const showNodeTooltip = throttle(function(event, d) {
             tooltip
-                .html(`<strong>${d.label}</strong><br/>Group: ${d.group}<br/>Influence: ${d.influence}<br/>Level: ${d.level}`)
+                .html(`<strong>${d.label}</strong><br/>Grupo: ${d.group}<br/>Influencia: ${d.influence}<br/>Nivel: ${d.level}`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 10) + "px")
                 .classed("visible", true);
@@ -905,8 +1012,8 @@
             interventionOnlyMode = !interventionOnlyMode;
             btnInterventionOnly.setAttribute('aria-pressed', interventionOnlyMode);
             btnInterventionOnly.textContent = interventionOnlyMode
-                ? 'Show All Groups'
-                : 'Show Interventions Only';
+                ? 'Mostrar todos los grupos'
+                : 'Mostrar solo intervenciones';
             btnInterventionOnly.style.backgroundColor = interventionOnlyMode ? '#EF6C00' : '#00796B';
             updateVisibility();
         });
