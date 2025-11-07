@@ -72,6 +72,18 @@ A D3.js-based interactive visualization for rendering actor-network graphs with 
 - **Color Contrast**: All colors meet WCAG AA standards
 - **Readable Text**: Bold text with white shadow for maximum legibility
 
+### Summary Table
+
+- **Top 10 Ranking**: Displays the 10 most influential nodes below the graph
+- **Columns**:
+  - Rank (#): Position by influence
+  - Label: Full node name
+  - Group: Color-coded badges matching graph colors
+  - Influence: Numeric influence value
+- **Interactive**: Hover effects on table rows
+- **Responsive**: Adapts to mobile screens
+- **Accessible**: Proper table semantics with scope attributes
+
 ## Usage
 
 ### Quick Start
