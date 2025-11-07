@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actor-Network Graph Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        #graph-container {
+            width: 100%;
+            height: 100vh;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .node circle {
+            stroke: #fff;
+            stroke-width: 2px;
+            cursor: pointer;
+            transition: stroke-width 0.2s;
+        }
+
+        .node:hover circle {
+            stroke: #333;
+            stroke-width: 3px;
+        }
+
+        .node text {
+            font-size: 11px;
+            font-weight: 600;
+            pointer-events: none;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            fill: #333;
+            text-shadow: 0 0 3px white, 0 0 3px white, 0 0 3px white;
+        }
+
+        .link {
+            fill: none;
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+
+        .link.dashed {
+            stroke-dasharray: 5, 5;
+        }
+
+        .arrow {
+            fill: #999;
+            fill-opacity: 0.6;
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            border-radius: 6px;
+            pointer-events: none;
+            font-size: 13px;
+            line-height: 1.4;
+            opacity: 0;
+            transition: opacity 0.2s;
+            max-width: 300px;
+            z-index: 1000;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .legend {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 13px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="graph-container"></div>
+    <div class="tooltip"></div>
+    <div class="legend">
+        <div class="legend-title">Node Groups</div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #2E7D32;"></div>
+            <span>Humano</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #1565C0;"></div>
+            <span>Artefacto</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #EF6C00;"></div>
+            <span>No Humano</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #6A1B9A;"></div>
+            <span>Institución</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background-color: #00796B;"></div>
+            <span>Intervención</span>
+        </div>
+    </div>
+
+    <script>
+        // Sample dataset structure - replace with actual data
+        const data = {
+            nodes: [
+                { id: "n1", label: "Community Leaders", short_label: "Leaders", influence: 85, group: "humano", level: "meso" },
+                { id: "n2", label: "Water Infrastructure", short_label: "Water", influence: 75, group: "artefacto", level: "macro" },
+                { id: "n3", label: "Local Wildlife", short_label: "Wildlife", influence: 60, group: "no_humano", level: "micro" },
+                { id: "n4", label: "Government Agency", short_label: "Gov", influence: 90, group: "institucion", level: "macro" },
+                { id: "n5", label: "Conservation Program", short_label: "Program", influence: 70, group: "intervencion", level: "meso" },
+                { id: "n6", label: "Farmers", short_label: "Farmers", influence: 65, group: "humano", level: "micro" },
+                { id: "n7", label: "Research Equipment", short_label: "Equipment", influence: 55, group: "artefacto", level: "micro" },
+                { id: "n8", label: "Native Plants", short_label: "Plants", influence: 50, group: "no_humano", level: "micro" },
+                { id: "n9", label: "Educational Institution", short_label: "Education", influence: 80, group: "institucion", level: "meso" },
+                { id: "n10", label: "Training Workshop", short_label: "Workshop", influence: 45, group: "intervencion", level: "micro" },
+                { id: "n11", label: "Scientists", short_label: "Scientists", influence: 72, group: "humano", level: "meso" },
+                { id: "n12", label: "Monitoring System", short_label: "Monitor", influence: 58, group: "artefacto", level: "meso" }
+            ],
+            links: [
+                { source: "n1", target: "n4", rel: "collaborates with", w: 4, pol: "+", conf: 0.9 },
+                { source: "n4", target: "n2", rel: "manages", w: 5, pol: "+", conf: 0.95 },
+                { source: "n5", target: "n3", rel: "protects", w: 3, pol: "+", conf: 0.85 },
+                { source: "n1", target: "n6", rel: "organizes", w: 3, pol: "+", conf: 0.8 },
+                { source: "n6", target: "n3", rel: "affects", w: 2, pol: "-", conf: 0.7 },
+                { source: "n9", target: "n11", rel: "employs", w: 4, pol: "+", conf: 0.9 },
+                { source: "n11", target: "n7", rel: "uses", w: 3, pol: "+", conf: 0.85 },
+                { source: "n7", target: "n12", rel: "connects to", w: 2, pol: "+", conf: 0.75 },
+                { source: "n5", target: "n10", rel: "implements", w: 4, pol: "+", conf: 0.88 },
+                { source: "n10", target: "n6", rel: "trains", w: 3, pol: "+", conf: 0.82 },
+                { source: "n2", target: "n8", rel: "irrigates", w: 2, pol: "+", conf: 0.65 },
+                { source: "n11", target: "n3", rel: "studies", w: 2, pol: "+", conf: 0.78 },
+                { source: "n12", target: "n8", rel: "monitors", w: 2, pol: "+", conf: 0.72 },
+                { source: "n4", target: "n5", rel: "funds", w: 5, pol: "+", conf: 0.92 }
+            ]
+        };
+
+        // Configuration
+        const width = window.innerWidth - 40;
+        const height = window.innerHeight - 40;
+
+        const colors = {
+            humano: "#2E7D32",
+            artefacto: "#1565C0",
+            no_humano: "#EF6C00",
+            institucion: "#6A1B9A",
+            intervencion: "#00796B"
+        };
+
+        // Level positions for soft clustering
+        const levelPositions = {
+            micro: { x: width * 0.3, y: height * 0.5 },
+            meso: { x: width * 0.5, y: height * 0.5 },
+            macro: { x: width * 0.7, y: height * 0.5 }
+        };
+
+        // Scale for node radius based on influence (8-38px)
+        const radiusScale = d3.scaleLinear()
+            .domain([d3.min(data.nodes, d => d.influence), d3.max(data.nodes, d => d.influence)])
+            .range([8, 38]);
+
+        // Scale for link width based on w (1-5)
+        const widthScale = d3.scaleLinear()
+            .domain([1, 5])
+            .range([1, 5]);
+
+        // Find top 8 most influential nodes
+        const top8Nodes = new Set(
+            data.nodes
+                .sort((a, b) => b.influence - a.influence)
+                .slice(0, 8)
+                .map(d => d.id)
+        );
+
+        // Create SVG
+        const svg = d3.select("#graph-container")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Create arrow markers for different widths
+        const defs = svg.append("defs");
+
+        [1, 2, 3, 4, 5].forEach(w => {
+            defs.append("marker")
+                .attr("id", `arrow-${w}`)
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 15)
+                .attr("refY", 0)
+                .attr("markerWidth", 6)
+                .attr("markerHeight", 6)
+                .attr("orient", "auto")
+                .append("path")
+                .attr("d", "M0,-5L10,0L0,5")
+                .attr("class", "arrow");
+        });
+
+        // Create tooltip
+        const tooltip = d3.select(".tooltip");
+
+        // Create force simulation
+        const simulation = d3.forceSimulation(data.nodes)
+            .force("link", d3.forceLink(data.links)
+                .id(d => d.id)
+                .distance(100))
+            .force("charge", d3.forceManyBody()
+                .strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide()
+                .radius(d => radiusScale(d.influence) + 5))
+            .force("x", d3.forceX(d => levelPositions[d.level].x)
+                .strength(0.1))
+            .force("y", d3.forceY(d => levelPositions[d.level].y)
+                .strength(0.1));
+
+        // Create links
+        const link = svg.append("g")
+            .selectAll("line")
+            .data(data.links)
+            .enter()
+            .append("line")
+            .attr("class", d => d.pol === "-" ? "link dashed" : "link")
+            .attr("stroke-width", d => widthScale(d.w))
+            .attr("marker-end", d => `url(#arrow-${d.w})`)
+            .on("mouseover", function(event, d) {
+                tooltip
+                    .html(`<strong>${d.rel}</strong><br/>Confidence: ${d.conf}`)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px")
+                    .classed("visible", true);
+            })
+            .on("mouseout", function() {
+                tooltip.classed("visible", false);
+            });
+
+        // Create nodes
+        const node = svg.append("g")
+            .selectAll("g")
+            .data(data.nodes)
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        // Add circles to nodes
+        node.append("circle")
+            .attr("r", d => radiusScale(d.influence))
+            .attr("fill", d => colors[d.group])
+            .on("mouseover", function(event, d) {
+                tooltip
+                    .html(`<strong>${d.label}</strong><br/>Group: ${d.group}<br/>Influence: ${d.influence}<br/>Level: ${d.level}`)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px")
+                    .classed("visible", true);
+            })
+            .on("mouseout", function() {
+                tooltip.classed("visible", false);
+            });
+
+        // Add labels to top 8 influential nodes
+        node.filter(d => top8Nodes.has(d.id))
+            .append("text")
+            .attr("dy", d => radiusScale(d.influence) + 12)
+            .text(d => d.short_label);
+
+        // Update positions on tick
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => {
+                    // Calculate position on edge of target circle
+                    const dx = d.target.x - d.source.x;
+                    const dy = d.target.y - d.source.y;
+                    const angle = Math.atan2(dy, dx);
+                    const radius = radiusScale(d.target.influence);
+                    return d.target.x - radius * Math.cos(angle);
+                })
+                .attr("y2", d => {
+                    const dx = d.target.x - d.source.x;
+                    const dy = d.target.y - d.source.y;
+                    const angle = Math.atan2(dy, dx);
+                    const radius = radiusScale(d.target.influence);
+                    return d.target.y - radius * Math.sin(angle);
+                });
+
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        // Drag functions
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth - 40;
+            const newHeight = window.innerHeight - 40;
+
+            svg.attr("width", newWidth)
+                .attr("height", newHeight);
+
+            simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+            simulation.alpha(0.3).restart();
+        });
+    </script>
+</body>
+</html>
