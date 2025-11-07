@@ -222,17 +222,13 @@
         }
 
         .node circle {
-            stroke: #fff;
-            stroke-width: 2px;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .node:hover circle,
         .node:focus circle {
-            stroke: #333;
-            stroke-width: 3px;
-            filter: brightness(1.1);
+            filter: brightness(1.15);
         }
 
         .node:focus {
@@ -240,19 +236,26 @@
         }
 
         .node:focus-visible circle {
-            stroke: #000;
-            stroke-width: 4px;
-            stroke-dasharray: 4, 2;
+            stroke-width: 5px !important;
         }
 
         .node.faded circle {
             opacity: 0.15;
         }
 
+        .node.faded .node-icon {
+            opacity: 0.15;
+        }
+
         .node.highlighted circle {
-            stroke: #FF4081;
-            stroke-width: 4px;
+            stroke: #FF4081 !important;
+            stroke-width: 5px !important;
             filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 64, 129, 0.6));
+        }
+
+        .node-icon {
+            pointer-events: none;
+            user-select: none;
         }
 
         .node text {
@@ -272,6 +275,18 @@
 
         .node.faded text {
             opacity: 0.15;
+        }
+
+        .edge-label {
+            font-size: 9px;
+            font-weight: 600;
+            fill: #555;
+            pointer-events: none;
+            text-shadow: 0 0 2px white, 0 0 2px white;
+        }
+
+        .link.faded + .edge-label {
+            opacity: 0.05;
         }
 
         .link {
@@ -758,6 +773,53 @@
                 .attr("class", "arrow");
         });
 
+        // Add glow filter for high-impact nodes
+        const filter = defs.append("filter")
+            .attr("id", "glow")
+            .attr("x", "-50%")
+            .attr("y", "-50%")
+            .attr("width", "200%")
+            .attr("height", "200%");
+
+        filter.append("feGaussianBlur")
+            .attr("stdDeviation", "3")
+            .attr("result", "coloredBlur");
+
+        const feMerge = filter.append("feMerge");
+        feMerge.append("feMergeNode").attr("in", "coloredBlur");
+        feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+        // Classify nodes by semantic role
+        const negativeEffects = new Set(['e1', 'e2', 'e3', 'e4', 'e5']);
+        const interventions = new Set(['int1', 'int2', 'int3', 'int4', 'int5']);
+        const platforms = new Set(['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'g1', 'g2', 'g3']);
+        const mediators = new Set(['c1', 'c2', 'c3', 'c4', 'c5', 'c6']); // Constructos psicológicos
+        const indirectInfluencers = new Set(['m1', 'm2', 'm3', 'm4', 'm5', 'm6']); // Motivadores
+        const highImpact = new Set(data.nodes.filter(n => n.influence >= 90).map(n => n.id));
+
+        // Helper function to get node icon
+        function getNodeIcon(nodeId) {
+            if (negativeEffects.has(nodeId)) return '⚠️';
+            if (interventions.has(nodeId)) return '🛠️';
+            if (platforms.has(nodeId)) return '📱';
+            return '';
+        }
+
+        // Helper function to generate short causal label
+        function getCausalLabel(rel, pol) {
+            const relLower = rel.toLowerCase();
+            if (relLower.includes('motiva')) return '↑ uso';
+            if (relLower.includes('induce') || relLower.includes('genera')) return '↑ efecto';
+            if (relLower.includes('agota') || relLower.includes('reduce')) return '↓ salud';
+            if (relLower.includes('ansiedad') || relLower.includes('depres')) return '↓ bienestar';
+            if (relLower.includes('compuls')) return '⟲ ciclo';
+            if (relLower.includes('trata') || relLower.includes('limita')) return '↓ impacto';
+            if (relLower.includes('diseña') || relLower.includes('explota')) return '⚙️ diseño';
+            if (relLower.includes('uso') && pol === '+') return '↑ uso';
+            if (pol === '-') return '↓ efecto';
+            return '';
+        }
+
         // Create tooltip
         const tooltip = d3.select(".tooltip");
 
@@ -819,6 +881,23 @@
                 tooltip.classed("visible", false);
             });
 
+        // Add edge labels
+        const edgeLabelGroup = zoomGroup.append("g").attr("class", "edge-labels");
+        const edgeLabels = edgeLabelGroup
+            .selectAll("text")
+            .data(data.links)
+            .enter()
+            .append("text")
+            .attr("class", "edge-label")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .style("font-size", "9px")
+            .style("font-weight", "600")
+            .style("fill", "#555")
+            .style("pointer-events", "none")
+            .style("text-shadow", "0 0 2px white, 0 0 2px white, 0 0 2px white")
+            .text(d => getCausalLabel(d.rel, d.pol));
+
         // Create nodes
         const nodeGroup = zoomGroup.append("g").attr("class", "nodes");
         const node = nodeGroup
@@ -835,15 +914,48 @@
                 .on("drag", dragged)
                 .on("end", dragended));
 
-        // Add circles to nodes
+        // Add circles to nodes with semantic border styles
         node.append("circle")
             .attr("r", d => radiusScale(d.influence))
             .attr("fill", d => colors[d.group])
+            .attr("stroke", d => {
+                // Different stroke colors for visual coding
+                if (negativeEffects.has(d.id)) return "#D32F2F"; // Red for negative effects
+                if (interventions.has(d.id)) return "#388E3C"; // Green for interventions
+                return "#fff";
+            })
+            .attr("stroke-width", d => {
+                // Thick border for mediators
+                if (mediators.has(d.id)) return 4;
+                if (highImpact.has(d.id)) return 3;
+                return 2;
+            })
+            .attr("stroke-dasharray", d => {
+                // Dashed border for indirect influencers
+                if (indirectInfluencers.has(d.id)) return "4,2";
+                return "0";
+            })
+            .attr("filter", d => {
+                // Glow for high-impact nodes
+                if (highImpact.has(d.id)) return "url(#glow)";
+                return null;
+            })
             .each(function(d) {
                 // Add title for tooltip
                 d3.select(this.parentNode).append("title")
                     .text(`${d.label}\nGrupo: ${d.group}\nInfluencia: ${d.influence}\nNivel: ${d.level}`);
             });
+
+        // Add icons to nodes
+        node.append("text")
+            .attr("class", "node-icon")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle")
+            .attr("dy", 1)
+            .style("font-size", d => `${Math.min(radiusScale(d.influence) * 0.8, 16)}px`)
+            .style("pointer-events", "none")
+            .style("user-select", "none")
+            .text(d => getNodeIcon(d.id));
 
         // Throttled node tooltip handler
         const showNodeTooltip = throttle(function(event, d) {
@@ -908,6 +1020,11 @@
                             return d.target.y - radius * Math.sin(angle);
                         });
 
+                    // Position edge labels at midpoint of links
+                    edgeLabels
+                        .attr("x", d => (d.source.x + d.target.x) / 2)
+                        .attr("y", d => (d.source.y + d.target.y) / 2);
+
                     node.attr("transform", d => `translate(${d.x},${d.y})`);
                     ticking = false;
                 });
@@ -949,6 +1066,13 @@
                 d3.select(this).style("display", (sourceVisible && targetVisible) ? null : "none");
             });
 
+            // Also hide/show edge labels
+            edgeLabels.each(function(d) {
+                const sourceVisible = nodesToShow.has(d.source.group);
+                const targetVisible = nodesToShow.has(d.target.group);
+                d3.select(this).style("display", (sourceVisible && targetVisible) ? null : "none");
+            });
+
             simulation.alpha(0.3).restart();
         }
 
@@ -959,6 +1083,7 @@
             if (!query) {
                 node.classed("faded", false).classed("highlighted", false);
                 link.classed("faded", false).classed("highlighted", false);
+                edgeLabels.classed("faded", false);
                 return;
             }
 
@@ -975,7 +1100,7 @@
                     .classed("highlighted", matches);
             });
 
-            // Highlight connected links
+            // Highlight connected links and their labels
             link.each(function(d) {
                 const sourceMatches = matchingNodes.has(d.source.id);
                 const targetMatches = matchingNodes.has(d.target.id);
@@ -984,6 +1109,14 @@
                 d3.select(this)
                     .classed("faded", !isConnected)
                     .classed("highlighted", sourceMatches && targetMatches);
+            });
+
+            edgeLabels.each(function(d) {
+                const sourceMatches = matchingNodes.has(d.source.id);
+                const targetMatches = matchingNodes.has(d.target.id);
+                const isConnected = sourceMatches || targetMatches;
+
+                d3.select(this).classed("faded", !isConnected);
             });
         }
 
