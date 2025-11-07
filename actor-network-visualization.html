@@ -6,31 +6,151 @@
     <title>Actor-Network Graph Visualization</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            padding: 20px;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f5f5f5;
+            overflow: hidden;
+        }
+
+        #controls-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .control-group label:hover {
+            background-color: #f0f0f0;
+        }
+
+        .control-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        #search-box {
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-width: 250px;
+            transition: border-color 0.2s;
+        }
+
+        #search-box:focus {
+            outline: none;
+            border-color: #1565C0;
+            box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.1);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: #1565C0;
+            color: white;
+        }
+
+        .btn:hover {
+            background-color: #0d47a1;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #00796B;
+        }
+
+        .btn-secondary:hover {
+            background-color: #00695C;
         }
 
         #graph-container {
             width: 100%;
-            height: 100vh;
+            height: calc(100vh - 80px);
+            margin-top: 80px;
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         .node circle {
             stroke: #fff;
             stroke-width: 2px;
             cursor: pointer;
-            transition: stroke-width 0.2s;
+            transition: all 0.2s;
         }
 
-        .node:hover circle {
+        .node:hover circle,
+        .node:focus circle {
             stroke: #333;
             stroke-width: 3px;
+            filter: brightness(1.1);
+        }
+
+        .node:focus {
+            outline: none;
+        }
+
+        .node:focus-visible circle {
+            stroke: #000;
+            stroke-width: 4px;
+            stroke-dasharray: 4, 2;
+        }
+
+        .node.faded circle {
+            opacity: 0.15;
+        }
+
+        .node.highlighted circle {
+            stroke: #FF4081;
+            stroke-width: 4px;
+            filter: brightness(1.2) drop-shadow(0 0 8px rgba(255, 64, 129, 0.6));
         }
 
         .node text {
@@ -39,18 +159,38 @@
             pointer-events: none;
             text-anchor: middle;
             dominant-baseline: middle;
-            fill: #333;
-            text-shadow: 0 0 3px white, 0 0 3px white, 0 0 3px white;
+            fill: #222;
+            text-shadow:
+                -1px -1px 0 white,
+                1px -1px 0 white,
+                -1px 1px 0 white,
+                1px 1px 0 white,
+                0 0 4px white;
+        }
+
+        .node.faded text {
+            opacity: 0.15;
         }
 
         .link {
             fill: none;
             stroke: #999;
             stroke-opacity: 0.6;
+            transition: all 0.2s;
         }
 
         .link.dashed {
             stroke-dasharray: 5, 5;
+        }
+
+        .link.faded {
+            stroke-opacity: 0.05;
+        }
+
+        .link.highlighted {
+            stroke: #FF4081;
+            stroke-opacity: 0.9;
+            stroke-width: 3px !important;
         }
 
         .arrow {
@@ -61,12 +201,12 @@
         .tooltip {
             position: absolute;
             padding: 10px;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             color: white;
             border-radius: 6px;
             pointer-events: none;
             font-size: 13px;
-            line-height: 1.4;
+            line-height: 1.5;
             opacity: 0;
             transition: opacity 0.2s;
             max-width: 300px;
@@ -79,13 +219,14 @@
 
         .legend {
             position: absolute;
-            top: 30px;
-            right: 30px;
+            top: 100px;
+            right: 20px;
             background: white;
             padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             font-size: 13px;
+            max-width: 200px;
         }
 
         .legend-item {
@@ -101,19 +242,149 @@
             margin-right: 8px;
             border: 2px solid #fff;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            flex-shrink: 0;
         }
 
         .legend-title {
             font-weight: 600;
             margin-bottom: 10px;
-            color: #333;
+            color: #222;
+        }
+
+        .color-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 3px;
+            vertical-align: middle;
+        }
+
+        #zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .zoom-btn:hover {
+            background: #f5f5f5;
+            transform: scale(1.1);
+        }
+
+        .zoom-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.3);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        @media (max-width: 768px) {
+            #controls-panel {
+                font-size: 12px;
+                padding: 10px;
+                gap: 10px;
+            }
+
+            #search-box {
+                min-width: 150px;
+            }
+
+            .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="graph-container"></div>
-    <div class="tooltip"></div>
-    <div class="legend">
+    <div id="controls-panel" role="toolbar" aria-label="Graph controls">
+        <div class="control-group" role="group" aria-label="Group filters">
+            <label>
+                <input type="checkbox" id="filter-humano" value="humano" checked aria-label="Show humano nodes">
+                <span class="color-indicator" style="background-color: #2E7D32;"></span>
+                Humano
+            </label>
+            <label>
+                <input type="checkbox" id="filter-artefacto" value="artefacto" checked aria-label="Show artefacto nodes">
+                <span class="color-indicator" style="background-color: #1565C0;"></span>
+                Artefacto
+            </label>
+            <label>
+                <input type="checkbox" id="filter-no_humano" value="no_humano" checked aria-label="Show no_humano nodes">
+                <span class="color-indicator" style="background-color: #EF6C00;"></span>
+                No Humano
+            </label>
+            <label>
+                <input type="checkbox" id="filter-institucion" value="institucion" checked aria-label="Show institucion nodes">
+                <span class="color-indicator" style="background-color: #6A1B9A;"></span>
+                Institución
+            </label>
+            <label>
+                <input type="checkbox" id="filter-intervencion" value="intervencion" checked aria-label="Show intervencion nodes">
+                <span class="color-indicator" style="background-color: #00796B;"></span>
+                Intervención
+            </label>
+        </div>
+
+        <div class="control-group">
+            <button id="btn-intervencion-only" class="btn btn-secondary" aria-pressed="false">
+                Show Interventions Only
+            </button>
+        </div>
+
+        <div class="control-group">
+            <input
+                type="text"
+                id="search-box"
+                placeholder="Search nodes by label..."
+                aria-label="Search nodes by label"
+                autocomplete="off"
+            >
+        </div>
+
+        <div class="control-group">
+            <button id="btn-export-svg" class="btn" aria-label="Export graph as SVG">
+                Export SVG
+            </button>
+            <button id="btn-export-png" class="btn" aria-label="Export graph as PNG">
+                Export PNG
+            </button>
+        </div>
+    </div>
+
+    <div id="graph-container" role="img" aria-label="Interactive actor-network graph"></div>
+    <div class="tooltip" role="tooltip"></div>
+
+    <div class="legend" aria-label="Legend">
         <div class="legend-title">Node Groups</div>
         <div class="legend-item">
             <div class="legend-color" style="background-color: #2E7D32;"></div>
@@ -135,6 +406,12 @@
             <div class="legend-color" style="background-color: #00796B;"></div>
             <span>Intervención</span>
         </div>
+    </div>
+
+    <div id="zoom-controls">
+        <button class="zoom-btn" id="zoom-in" aria-label="Zoom in">+</button>
+        <button class="zoom-btn" id="zoom-out" aria-label="Zoom out">−</button>
+        <button class="zoom-btn" id="zoom-reset" aria-label="Reset zoom">⟲</button>
     </div>
 
     <script>
@@ -173,8 +450,10 @@
         };
 
         // Configuration
-        const width = window.innerWidth - 40;
-        const height = window.innerHeight - 40;
+        const container = d3.select("#graph-container");
+        const containerNode = container.node();
+        const width = containerNode.clientWidth;
+        const height = containerNode.clientHeight;
 
         const colors = {
             humano: "#2E7D32",
@@ -183,6 +462,11 @@
             institucion: "#6A1B9A",
             intervencion: "#00796B"
         };
+
+        // State management
+        let activeFilters = new Set(['humano', 'artefacto', 'no_humano', 'institucion', 'intervencion']);
+        let interventionOnlyMode = false;
+        let searchQuery = '';
 
         // Level positions for soft clustering
         const levelPositions = {
@@ -204,16 +488,30 @@
         // Find top 8 most influential nodes
         const top8Nodes = new Set(
             data.nodes
+                .slice()
                 .sort((a, b) => b.influence - a.influence)
                 .slice(0, 8)
                 .map(d => d.id)
         );
 
-        // Create SVG
-        const svg = d3.select("#graph-container")
+        // Create SVG with zoom group
+        const svg = container
             .append("svg")
             .attr("width", width)
-            .attr("height", height);
+            .attr("height", height)
+            .attr("role", "img")
+            .attr("aria-label", "Actor-network force-directed graph");
+
+        // Create zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 10])
+            .on("zoom", (event) => {
+                zoomGroup.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        const zoomGroup = svg.append("g");
 
         // Create arrow markers for different widths
         const defs = svg.append("defs");
@@ -235,6 +533,18 @@
         // Create tooltip
         const tooltip = d3.select(".tooltip");
 
+        // Throttle function for performance
+        function throttle(func, limit) {
+            let inThrottle;
+            return function(...args) {
+                if (!inThrottle) {
+                    func.apply(this, args);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            };
+        }
+
         // Create force simulation
         const simulation = d3.forceSimulation(data.nodes)
             .force("link", d3.forceLink(data.links)
@@ -244,14 +554,15 @@
                 .strength(-300))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("collision", d3.forceCollide()
-                .radius(d => radiusScale(d.influence) + 5))
+                .radius(d => radiusScale(d.influence) + 10))
             .force("x", d3.forceX(d => levelPositions[d.level].x)
                 .strength(0.1))
             .force("y", d3.forceY(d => levelPositions[d.level].y)
                 .strength(0.1));
 
         // Create links
-        const link = svg.append("g")
+        const linkGroup = zoomGroup.append("g").attr("class", "links");
+        const link = linkGroup
             .selectAll("line")
             .data(data.links)
             .enter()
@@ -259,24 +570,38 @@
             .attr("class", d => d.pol === "-" ? "link dashed" : "link")
             .attr("stroke-width", d => widthScale(d.w))
             .attr("marker-end", d => `url(#arrow-${d.w})`)
-            .on("mouseover", function(event, d) {
-                tooltip
-                    .html(`<strong>${d.rel}</strong><br/>Confidence: ${d.conf}`)
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 10) + "px")
-                    .classed("visible", true);
-            })
+            .each(function(d) {
+                // Add title for accessibility
+                d3.select(this).append("title")
+                    .text(`${d.rel} (confidence: ${d.conf})`);
+            });
+
+        // Throttled tooltip handler
+        const showLinkTooltip = throttle(function(event, d) {
+            tooltip
+                .html(`<strong>${d.rel}</strong><br/>Confidence: ${d.conf}`)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px")
+                .classed("visible", true);
+        }, 50);
+
+        link
+            .on("mouseover", showLinkTooltip)
             .on("mouseout", function() {
                 tooltip.classed("visible", false);
             });
 
         // Create nodes
-        const node = svg.append("g")
+        const nodeGroup = zoomGroup.append("g").attr("class", "nodes");
+        const node = nodeGroup
             .selectAll("g")
             .data(data.nodes)
             .enter()
             .append("g")
             .attr("class", "node")
+            .attr("tabindex", 0)
+            .attr("role", "button")
+            .attr("aria-label", d => `${d.label}, ${d.group} group, influence ${d.influence}`)
             .call(d3.drag()
                 .on("start", dragstarted)
                 .on("drag", dragged)
@@ -286,45 +611,79 @@
         node.append("circle")
             .attr("r", d => radiusScale(d.influence))
             .attr("fill", d => colors[d.group])
-            .on("mouseover", function(event, d) {
-                tooltip
-                    .html(`<strong>${d.label}</strong><br/>Group: ${d.group}<br/>Influence: ${d.influence}<br/>Level: ${d.level}`)
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY - 10) + "px")
-                    .classed("visible", true);
-            })
+            .each(function(d) {
+                // Add title for tooltip
+                d3.select(this.parentNode).append("title")
+                    .text(`${d.label}\nGroup: ${d.group}\nInfluence: ${d.influence}\nLevel: ${d.level}`);
+            });
+
+        // Throttled node tooltip handler
+        const showNodeTooltip = throttle(function(event, d) {
+            tooltip
+                .html(`<strong>${d.label}</strong><br/>Group: ${d.group}<br/>Influence: ${d.influence}<br/>Level: ${d.level}`)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px")
+                .classed("visible", true);
+        }, 50);
+
+        node
+            .on("mouseover", showNodeTooltip)
             .on("mouseout", function() {
                 tooltip.classed("visible", false);
+            })
+            .on("keydown", function(event, d) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    // Highlight on enter/space
+                    highlightNode(d);
+                }
             });
 
         // Add labels to top 8 influential nodes
-        node.filter(d => top8Nodes.has(d.id))
+        const labels = node.filter(d => top8Nodes.has(d.id))
             .append("text")
+            .attr("class", "node-label")
             .attr("dy", d => radiusScale(d.influence) + 12)
             .text(d => d.short_label);
 
-        // Update positions on tick
-        simulation.on("tick", () => {
-            link
-                .attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => {
-                    // Calculate position on edge of target circle
-                    const dx = d.target.x - d.source.x;
-                    const dy = d.target.y - d.source.y;
-                    const angle = Math.atan2(dy, dx);
-                    const radius = radiusScale(d.target.influence);
-                    return d.target.x - radius * Math.cos(angle);
-                })
-                .attr("y2", d => {
-                    const dx = d.target.x - d.source.x;
-                    const dy = d.target.y - d.source.y;
-                    const angle = Math.atan2(dy, dx);
-                    const radius = radiusScale(d.target.influence);
-                    return d.target.y - radius * Math.sin(angle);
-                });
+        // Collision-aware label positioning using simulation
+        const labelCollisionForce = d3.forceSimulation(
+            data.nodes.filter(d => top8Nodes.has(d.id))
+        )
+            .force("collide", d3.forceCollide().radius(20))
+            .stop();
 
-            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        // Run label collision simulation
+        for (let i = 0; i < 50; ++i) labelCollisionForce.tick();
+
+        // Update positions on tick using requestAnimationFrame
+        let ticking = false;
+        simulation.on("tick", () => {
+            if (!ticking) {
+                ticking = true;
+                requestAnimationFrame(() => {
+                    link
+                        .attr("x1", d => d.source.x)
+                        .attr("y1", d => d.source.y)
+                        .attr("x2", d => {
+                            const dx = d.target.x - d.source.x;
+                            const dy = d.target.y - d.source.y;
+                            const angle = Math.atan2(dy, dx);
+                            const radius = radiusScale(d.target.influence);
+                            return d.target.x - radius * Math.cos(angle);
+                        })
+                        .attr("y2", d => {
+                            const dx = d.target.x - d.source.x;
+                            const dy = d.target.y - d.source.y;
+                            const angle = Math.atan2(dy, dx);
+                            const radius = radiusScale(d.target.influence);
+                            return d.target.y - radius * Math.sin(angle);
+                        });
+
+                    node.attr("transform", d => `translate(${d.x},${d.y})`);
+                    ticking = false;
+                });
+            }
         });
 
         // Drag functions
@@ -345,16 +704,187 @@
             d.fy = null;
         }
 
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            const newWidth = window.innerWidth - 40;
-            const newHeight = window.innerHeight - 40;
+        // Filter functionality
+        function updateVisibility() {
+            const nodesToShow = interventionOnlyMode
+                ? new Set(['intervencion'])
+                : activeFilters;
 
-            svg.attr("width", newWidth)
-                .attr("height", newHeight);
+            node.each(function(d) {
+                const visible = nodesToShow.has(d.group);
+                d3.select(this).style("display", visible ? null : "none");
+            });
 
-            simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+            link.each(function(d) {
+                const sourceVisible = nodesToShow.has(d.source.group);
+                const targetVisible = nodesToShow.has(d.target.group);
+                d3.select(this).style("display", (sourceVisible && targetVisible) ? null : "none");
+            });
+
             simulation.alpha(0.3).restart();
+        }
+
+        // Search and highlight functionality
+        function updateSearch() {
+            const query = searchQuery.toLowerCase().trim();
+
+            if (!query) {
+                node.classed("faded", false).classed("highlighted", false);
+                link.classed("faded", false).classed("highlighted", false);
+                return;
+            }
+
+            const matchingNodes = new Set();
+            const connectedLinks = new Set();
+
+            node.each(function(d) {
+                const matches = d.label.toLowerCase().includes(query);
+                if (matches) {
+                    matchingNodes.add(d.id);
+                }
+                d3.select(this)
+                    .classed("faded", !matches)
+                    .classed("highlighted", matches);
+            });
+
+            // Highlight connected links
+            link.each(function(d) {
+                const sourceMatches = matchingNodes.has(d.source.id);
+                const targetMatches = matchingNodes.has(d.target.id);
+                const isConnected = sourceMatches || targetMatches;
+
+                d3.select(this)
+                    .classed("faded", !isConnected)
+                    .classed("highlighted", sourceMatches && targetMatches);
+            });
+        }
+
+        function highlightNode(d) {
+            searchQuery = d.label;
+            document.getElementById('search-box').value = d.label;
+            updateSearch();
+        }
+
+        // Event listeners for filters
+        document.querySelectorAll('#controls-panel input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const group = e.target.value;
+                if (e.target.checked) {
+                    activeFilters.add(group);
+                } else {
+                    activeFilters.delete(group);
+                }
+                updateVisibility();
+            });
+        });
+
+        // Intervention-only toggle
+        const btnInterventionOnly = document.getElementById('btn-intervencion-only');
+        btnInterventionOnly.addEventListener('click', () => {
+            interventionOnlyMode = !interventionOnlyMode;
+            btnInterventionOnly.setAttribute('aria-pressed', interventionOnlyMode);
+            btnInterventionOnly.textContent = interventionOnlyMode
+                ? 'Show All Groups'
+                : 'Show Interventions Only';
+            btnInterventionOnly.style.backgroundColor = interventionOnlyMode ? '#EF6C00' : '#00796B';
+            updateVisibility();
+        });
+
+        // Search box
+        const searchBox = document.getElementById('search-box');
+        searchBox.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            updateSearch();
+        });
+
+        // Zoom controls
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            svg.transition().duration(300).call(zoom.scaleBy, 1.3);
+        });
+
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            svg.transition().duration(300).call(zoom.scaleBy, 0.7);
+        });
+
+        document.getElementById('zoom-reset').addEventListener('click', () => {
+            svg.transition().duration(500).call(
+                zoom.transform,
+                d3.zoomIdentity
+            );
+        });
+
+        // Export SVG
+        document.getElementById('btn-export-svg').addEventListener('click', () => {
+            const svgElement = svg.node();
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svgElement);
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'actor-network-graph.svg';
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Export PNG
+        document.getElementById('btn-export-png').addEventListener('click', () => {
+            const svgElement = svg.node();
+            const serializer = new XMLSerializer();
+            const svgString = serializer.serializeToString(svgElement);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width * 2; // 2x for better quality
+            canvas.height = height * 2;
+            const ctx = canvas.getContext('2d');
+
+            const img = new Image();
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(svgBlob);
+
+            img.onload = () => {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob((blob) => {
+                    const pngUrl = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = pngUrl;
+                    link.download = 'actor-network-graph.png';
+                    link.click();
+                    URL.revokeObjectURL(pngUrl);
+                    URL.revokeObjectURL(url);
+                });
+            };
+
+            img.src = url;
+        });
+
+        // Handle window resize
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const newWidth = containerNode.clientWidth;
+                const newHeight = containerNode.clientHeight;
+
+                svg.attr("width", newWidth)
+                    .attr("height", newHeight);
+
+                simulation.force("center", d3.forceCenter(newWidth / 2, newHeight / 2));
+                simulation.alpha(0.3).restart();
+            }, 250);
+        });
+
+        // Keyboard navigation for graph
+        svg.on("keydown", function(event) {
+            if (event.key === 'Escape') {
+                searchBox.value = '';
+                searchQuery = '';
+                updateSearch();
+                searchBox.focus();
+            }
         });
     </script>
 </body>
