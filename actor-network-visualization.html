@@ -15,7 +15,7 @@
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f5f5f5;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         #controls-panel {
@@ -117,6 +117,108 @@
             margin-top: 80px;
             background-color: white;
             position: relative;
+        }
+
+        #summary-section {
+            width: 100%;
+            padding: 40px 20px;
+            background-color: #f5f5f5;
+        }
+
+        #summary-table-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        #summary-table-container h2 {
+            margin: 0 0 20px 0;
+            color: #222;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        #influence-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        #influence-table thead {
+            background-color: #1565C0;
+            color: white;
+        }
+
+        #influence-table th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #0d47a1;
+        }
+
+        #influence-table tbody tr {
+            border-bottom: 1px solid #e0e0e0;
+            transition: background-color 0.2s;
+        }
+
+        #influence-table tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        #influence-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        #influence-table td {
+            padding: 12px 16px;
+            color: #333;
+        }
+
+        #influence-table .rank-cell {
+            font-weight: 600;
+            color: #1565C0;
+            width: 60px;
+        }
+
+        #influence-table .group-cell {
+            text-transform: capitalize;
+        }
+
+        #influence-table .group-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            text-transform: capitalize;
+        }
+
+        #influence-table .influence-cell {
+            font-weight: 600;
+            color: #2E7D32;
+        }
+
+        @media (max-width: 768px) {
+            #summary-table-container {
+                padding: 20px;
+            }
+
+            #summary-table-container h2 {
+                font-size: 20px;
+            }
+
+            #influence-table {
+                font-size: 13px;
+            }
+
+            #influence-table th,
+            #influence-table td {
+                padding: 10px 12px;
+            }
         }
 
         .node circle {
@@ -413,6 +515,25 @@
         <button class="zoom-btn" id="zoom-out" aria-label="Zoom out">−</button>
         <button class="zoom-btn" id="zoom-reset" aria-label="Reset zoom">⟲</button>
     </div>
+
+    <section id="summary-section">
+        <div id="summary-table-container">
+            <h2>Top 10 Nodes by Influence</h2>
+            <table id="influence-table" role="table" aria-label="Top 10 most influential nodes">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Label</th>
+                        <th scope="col">Group</th>
+                        <th scope="col">Influence</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </section>
 
     <script>
         // Sample dataset structure - replace with actual data
@@ -886,6 +1007,53 @@
                 searchBox.focus();
             }
         });
+
+        // Populate summary table with top 10 nodes by influence
+        function populateSummaryTable() {
+            const top10 = data.nodes
+                .slice()
+                .sort((a, b) => b.influence - a.influence)
+                .slice(0, 10);
+
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+
+            top10.forEach((node, index) => {
+                const row = document.createElement('tr');
+
+                // Rank
+                const rankCell = document.createElement('td');
+                rankCell.className = 'rank-cell';
+                rankCell.textContent = index + 1;
+                row.appendChild(rankCell);
+
+                // Label
+                const labelCell = document.createElement('td');
+                labelCell.textContent = node.label;
+                row.appendChild(labelCell);
+
+                // Group (with badge)
+                const groupCell = document.createElement('td');
+                groupCell.className = 'group-cell';
+                const badge = document.createElement('span');
+                badge.className = 'group-badge';
+                badge.textContent = node.group.replace('_', ' ');
+                badge.style.backgroundColor = colors[node.group];
+                groupCell.appendChild(badge);
+                row.appendChild(groupCell);
+
+                // Influence
+                const influenceCell = document.createElement('td');
+                influenceCell.className = 'influence-cell';
+                influenceCell.textContent = node.influence;
+                row.appendChild(influenceCell);
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Initialize table
+        populateSummaryTable();
     </script>
 </body>
 </html>
