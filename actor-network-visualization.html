@@ -711,11 +711,33 @@
         let interventionOnlyMode = false;
         let searchQuery = '';
 
-        // Level positions for soft clustering
+        // Define level zones for layered layout (optimized for print)
+        const padding = 80; // Space for labels and margins
+        const zoneHeight = (height - padding * 2) / 3;
+
+        const levelZones = {
+            macro: {
+                y: padding,
+                height: zoneHeight,
+                label: "MACRO: Sistemas e Instituciones"
+            },
+            meso: {
+                y: padding + zoneHeight,
+                height: zoneHeight,
+                label: "MESO: Mediadores y Efectos"
+            },
+            micro: {
+                y: padding + zoneHeight * 2,
+                height: zoneHeight,
+                label: "MICRO: Individuos y Constructos"
+            }
+        };
+
+        // Level positions for force-directed clustering
         const levelPositions = {
-            micro: { x: width * 0.3, y: height * 0.5 },
-            meso: { x: width * 0.5, y: height * 0.5 },
-            macro: { x: width * 0.7, y: height * 0.5 }
+            macro: { x: width * 0.5, y: levelZones.macro.y + zoneHeight * 0.5 },
+            meso: { x: width * 0.5, y: levelZones.meso.y + zoneHeight * 0.5 },
+            micro: { x: width * 0.5, y: levelZones.micro.y + zoneHeight * 0.5 }
         };
 
         // Scale for node radius based on influence (8-38px)
@@ -755,6 +777,46 @@
         svg.call(zoom);
 
         const zoomGroup = svg.append("g");
+
+        // Add background zones for level clustering (optimized for print)
+        const zonesGroup = zoomGroup.append("g").attr("class", "level-zones");
+
+        Object.entries(levelZones).forEach(([level, zone]) => {
+            const zoneGroup = zonesGroup.append("g").attr("class", `zone-${level}`);
+
+            // Background rectangle
+            zoneGroup.append("rect")
+                .attr("x", 20)
+                .attr("y", zone.y)
+                .attr("width", width - 40)
+                .attr("height", zone.height)
+                .attr("fill", level === 'macro' ? '#f8f9fa' : level === 'meso' ? '#ffffff' : '#f8f9fa')
+                .attr("stroke", "#dee2e6")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,3")
+                .attr("rx", 8)
+                .attr("opacity", 0.6);
+
+            // Zone label (left side)
+            zoneGroup.append("text")
+                .attr("x", 35)
+                .attr("y", zone.y + 25)
+                .attr("font-size", "14px")
+                .attr("font-weight", "700")
+                .attr("fill", "#495057")
+                .attr("text-anchor", "start")
+                .text(zone.label.split(':')[0]); // Just "MACRO", "MESO", "MICRO"
+
+            // Zone description (smaller text)
+            zoneGroup.append("text")
+                .attr("x", 35)
+                .attr("y", zone.y + 42)
+                .attr("font-size", "11px")
+                .attr("font-weight", "400")
+                .attr("fill", "#6c757d")
+                .attr("text-anchor", "start")
+                .text(zone.label.split(':')[1]); // Description
+        });
 
         // Create arrow markers for different widths
         const defs = svg.append("defs");
@@ -835,20 +897,29 @@
             };
         }
 
-        // Create force simulation
+        // Create force simulation (optimized for static print viewing)
         const simulation = d3.forceSimulation(data.nodes)
             .force("link", d3.forceLink(data.links)
                 .id(d => d.id)
-                .distance(100))
+                .distance(80))  // Reduced for more compact layout
             .force("charge", d3.forceManyBody()
-                .strength(-300))
+                .strength(-250))  // Reduced for tighter grouping
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("collision", d3.forceCollide()
-                .radius(d => radiusScale(d.influence) + 10))
+                .radius(d => radiusScale(d.influence) + 15))  // Increased to prevent overlap
             .force("x", d3.forceX(d => levelPositions[d.level].x)
-                .strength(0.1))
+                .strength(0.05))  // Weak horizontal centering
             .force("y", d3.forceY(d => levelPositions[d.level].y)
-                .strength(0.1));
+                .strength(0.4))  // Strong vertical constraint to zones
+            .force("boundingBox", function() {
+                // Keep nodes within their zone boundaries
+                data.nodes.forEach(n => {
+                    const zone = levelZones[n.level];
+                    const r = radiusScale(n.influence);
+                    n.y = Math.max(zone.y + r + 5, Math.min(zone.y + zone.height - r - 5, n.y));
+                    n.x = Math.max(r + 25, Math.min(width - r - 25, n.x));
+                });
+            });
 
         // Create links
         const linkGroup = zoomGroup.append("g").attr("class", "links");
